@@ -1,6 +1,7 @@
 # main3.py
 
 import streamlit as st
+from streamlit_option_menu import option_menu
 import subprocess
 import os 
 import pydeck as pd
@@ -42,10 +43,27 @@ FACT_BACKGROUND = """
                     </div>
                     """     
 
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            back
+            </style>
+            <body style="background-color: aqua;">
+    
+    
+            </body>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 this_x = 'Property Insight'
 st.set_page_config("Property Insight", layout='centered')
-page = st.radio('Property Insight', ["Home", "chat", "map",
-                "deals", "charts", "calc", "account"], horizontal=True, label_visibility="collapsed")
+with st.sidebar:
+    page = option_menu(None, ["Home", "chat", "map",
+                              "deals", "charts", "calc", "Account"],
+                       icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
+    page
 
 @st.cache_data
 def map_data ():
@@ -335,72 +353,129 @@ if page == "deals":
 
 
 if page == "charts":
-    st.title("Chart Page")
-
     _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns([2, 3, 3, 3, 3, 3, 2])
     _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns([2, 3, 3, 3, 3, 3, 2])
-    _, r3_col1, _ = st.columns([1, 10, 1]) 
+    _, r3_col1, _ = st.columns([6, 10, 1]) 
     _, r4_col1, _ = st.columns([1, 10, 1])
     with r1_col1:
         if st.button("2013"):
-            with r4_col1:
-                image_2013 = Image.open('charts/picture1.png')
-                st.image(image_2013, caption='Chart for 2013')
+            with r3_col1:
+                data_2013 = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2013')
+                st.subheader('chart for 2013')
+                with r4_col1:
+                    st.bar_chart(data_2013, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data_2013, x='Neighborhood',
+                                 y='Propertys Price  ',  height=350, use_container_width=True)
+                
 
     with r1_col2:
         if st.button("2014"):
             with r3_col1:
-                image_2014 = Image.open('charts/picture1.png')
-                st.image(image_2014, caption='Chart for 2014')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2014')
+                st.subheader('chart for 2014')
+                with r4_col1 :
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r1_col3:
         if st.button("2015"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2015')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2015')
+                st.subheader('chart for 2015')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r1_col4:
         if st.button("2016"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2016')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2016')
+                st.subheader('chart for 2016')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
     
     with r1_col5:
         if st.button("2017"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2017')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2017')
+                st.subheader('chart for 2017')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r2_col1:
         if st.button("2018"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2018')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2018')
+                st.subheader('chart for 2018')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r2_col2:
         if st.button("2019"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2019')
-
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2019')
+                st.subheader('chart for 2019')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
     with r2_col3:
         if st.button("2020"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2020')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2020')
+                st.subheader('chart for 2020')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                             y='PropertySelld ', height=350,use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r2_col4:
         if st.button("2021"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2021')
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2021')
+                st.subheader('chart for 2021')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 
     with r2_col5:
         if st.button("2022"):
             with r3_col1:
-                image_2015 = Image.open('charts/picture1.png')
-                st.image(image_2015, caption='Chart for 2022')
-
+                data = pd.read_excel(
+                    'output/2013.xlsx', sheet_name='2022')
+                st.subheader('chart for 2022')
+                with r4_col1:
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='PropertySelld ', height=350, use_container_width=True)
+                    st.bar_chart(data, x='Neighborhood',
+                                 y='Propertys Price  ', height=350, use_container_width=True)
 class_input_map = {
     'Commercial': 1,
     'Residential': 2,
