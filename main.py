@@ -13,11 +13,9 @@ from collections import deque
 import openai
 from PIL import Image
 from datetime import datetime
-import map as mp
 import streamlit_authenticator as stauth
 import pickle
 from pathlib import Path
-import accounte2 as acc
 import folium
 import geopandas
 import pandas as pd
@@ -25,6 +23,7 @@ import streamlit as st
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 from PIL import Image
+st.set_page_config("Property Insight", layout='centered')
 
 
 FACT_BACKGROUND = """
@@ -57,8 +56,6 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-this_x = 'Property Insight'
-st.set_page_config("Property Insight", layout='centered')
 with st.sidebar:
     page = option_menu(None, ["Home", "chat", "map",
                               "deals", "charts", "calc", "Account"],
@@ -67,7 +64,7 @@ with st.sidebar:
 
 @st.cache_data
 def map_data ():
-    df = pd.read_excel("output/map.xlsx")
+    df = pd.read_excel("data/map.xlsx")
     return df
 
 column_mapping = {
@@ -95,8 +92,8 @@ def search_by_deal_nummper(deal_nummper):
         # Display the matching data in the desired format
         for i, (index, row) in enumerate(filtered_df.iterrows(), 1):
             st.write(f"\nMatch {i}:")
-            
-            format_match(i, row)
+            info = format_match(i, row)
+            return info
 
 
 def search_not_by_deal_nummper(real_estate_firts_text, real_estate_secando_text):
@@ -114,47 +111,52 @@ def search_not_by_deal_nummper(real_estate_firts_text, real_estate_secando_text)
             w = i 
             st.write("------------------------------")
             st.write(f"\nMatch {w}:")
-            format_match(i, row)
+            info = format_match(i, row)
+            return info
 
 
-def search_by_real_estate_firts_text(real_estate_firts_text):
-    # Filter the DataFrame based on the provided real_estate_firts_text
-    filtered_df = df[df[column_mapping['real_estate_firts_text']]
-                     == real_estate_firts_text]
-
-    if filtered_df.empty:
-        st.write("No matching data found")
-    else:
-        # Display all matching data in the desired format
-        for i, (_, row) in enumerate(filtered_df.iterrows(), 1):
-            st.write(f"\nMatch {i}:")
-            format_match(i, row)
-            
-
-
-# Function to print a match in the desired format
 def format_match(match_number, row):
-    st.write(f"رقم الصفقة: {str(row['رقم الصفقة'])}\n")
-    st.write(f"التصنيف: {str(row['التصنيف'])}\n")
-    st.write(f"النوع: {str(row['النوع'])}\n")
-    st.write(f"سعر الصفقة (ريال): {str(row['سعر الصفقة (ريال)'])}\n")
-    st.write(f"المساحة (متر مربع): {str(row['المساحة (متر مربع)'])}\n")
-    st.write(f"سعر المتر المربع (ريال) : {str(row['سعر المتر المربع (ريال)'])}\n")
-    st.write(f"المنطقة: {str(row['المنطقة'])}\n")
-    st.write(f"المدينة: {str(row['المدينة'])}\n")
-    st.write(f"الحي: {str(row['الحي'])}\n")
-    date_str = str(row['تاريخ الصفقة'])
-    try:
-        date_obj = datetime.strptime(date_str, "%d/%m/%Y")
-        formatted_date = date_obj.strftime("%d/%m/%Y")
-        st.write(f"تاريخ الصفقة: {formatted_date}\n")
-    except ValueError:
-        # Print the date as is if it's not in the expected format
-        st.write(f"تاريخ الصفقة: {date_str}\n")
-    st.write(f"المخطط: {str(row['المخطط'])}\n")
-    st.write(f"القطعة: {str(row['القطعة'])}\n\n")
+    class_map = {
+        'تجاري': 'Commercial',
+        'سكني': 'Residential',
+    }
 
+    type_map = {
+        'شقة': 'Apartment',
+        'بيت': 'House',
+        'قطعة أرض': 'Plot of Land',
+        'فيلا': 'Villa',
+    }
 
+    neighborhood_map = {
+        'البيان': 'Albayan',
+        'الرمال': 'Alrimal',
+        'الخير': 'Alkhayr',
+        'العارض': 'Alearid',
+        'القادسية': 'Alqadisia',
+        'الملقا': 'Almilqa',
+        'المهدية': 'Almahdih',
+        'الياسمين': 'Alyasamin',
+        'بنبان': 'Benban',
+        'طويق': 'Tuwaiq',
+        'لبن': 'Laban',
+    }
+
+    match_info = {
+        "Deal Number": row["رقم الصفقة"],
+        "Class": class_map.get(row["التصنيف"], row["التصنيف"]),
+        "Type": type_map.get(row["النوع"], row["النوع"]),
+        "Deal Price (SR)": row["سعر الصفقة (ريال)"],
+        "Area(Square meters)": row["المساحة (متر مربع)"],
+        "Price For one Square meters": row["سعر المتر المربع (ريال)"],
+        "Neighborhood": neighborhood_map.get(row["الحي"], row["الحي"]),
+        "Date": row["تاريخ الصفقة"],
+        "Plan": row["المخطط"],
+        "Plot": row["القطعة"]
+    }
+
+    match_df = pd.DataFrame(match_info.items(), columns=["Field", "Value"])
+    return match_df
 
 if page == "Home":
     st.title("Welcome to the Home Page!")
@@ -199,36 +201,11 @@ if page == "chat":
 @st.cache_data
 def load_df():
     df = pd.read_excel(
-        "output/map.xlsx", usecols=['القطعة', 'N', 'E', 'area', 'neighbor', 'المخطط', 'class', 'Type' , 'ID'])
+        "data/map.xlsx", usecols=['القطعة', 'N', 'E', 'area', 'neighbor', 'المخطط', 'class', 'Type' , 'ID'])
     df.rename(columns={'N': 'Latitude', 'القطعة': 'Land', 'المخطط': 'plan',
               'E': 'Longitude'}, inplace=True)
     return df
 
-
-def search_by_N_E(Latitude, Longitude):
-    # Filter the DataFrame based on the provided criteria
-    filtered_df = df[
-        (df[column_mapping['Latitude']] == Latitude) &
-        (df[column_mapping['Longitude']] == Longitude)
-    ]
-
-    if filtered_df.empty:
-        st.write("No matching data found.")
-    else:
-        # Display the matching data in the desired format with match numbers
-        for i, (_, row) in enumerate(filtered_df.iterrows(), 1):
-            w = i
-            st.write("------------------------------")
-            st.write(f"\nMatch {w}:")
-            format_match_map(i, row)
-
-def format_match_map(match_number, row):
-    st.write(f"التصنيف: {str(row['2التصنيف'])}\n")
-    st.write(f"النوع: {str(row['2النوع'])}\n")
-    st.write(f"المساحة (متر مربع): {str(row['area'])}\n")
-    st.write(f"الحي: {str(row['الحي'])}\n")
-    st.write(f"المخطط: {str(row['المخطط'])}\n")
-    st.write(f"القطعة: {str(row['القطعة'])}\n\n")
 
 
 def plot_from_df(df, folium_map):
@@ -305,13 +282,21 @@ if page == "map":
 
 
         
-@st.cache_data
-def lode_data():
-    df = pd.read_excel("output/modified_merged_data2.xlsx")
-    return df 
+# @st.cache_data
+# def lode_data():
+#     df = pd.read_excel("data/modified_merged_data2.xlsx")
+#     return df 
 
 if page == "deals":
+    @st.cache_data
+    def lode_data():
+        df = pd.read_excel("data/modified_merged_data2.xlsx")
+        return df
+    
+    df = load_df()
     st.title("deals")
+    
+
     with st.form("deal_nummper_user_inputs"):
         _ , r1_col1 , r1_col2 , r1_col3 , r1_col4 , _ = st.columns([1, 5, 2, 5,5, 1])
         _ , r2_col1 , r2_col2 , r2_col3 , r2_col4 , _ = st.columns([1, 5, 2, 5, 5, 1])
@@ -327,29 +312,29 @@ if page == "deals":
                 "Enter the land number :", )
         with r2_col1 :
             real_estate_numper_search_button = st.form_submit_button("search")
-        
 
-    if real_estate_numper_search_button:
-        if deal_nummper !='' and real_estate_firts_numper == '' and real_estate_secando_numper == '':
-            st.title("Search Results 1 ")
-            df = lode_data()
-            search_by_deal_nummper(int(deal_nummper))
+    _, r3_col1, _ = st.columns([0.1, 20, 0.1])
+    with r3_col1:
+        if real_estate_numper_search_button:
+            if deal_nummper !='' and real_estate_firts_numper == '' and real_estate_secando_numper == '':
+                st.title("Search Results ")
+                df = lode_data()
+                st.table(search_by_deal_nummper(int(deal_nummper)))
             
-        elif real_estate_secando_numper !='' and deal_nummper == '':
-            input_data = {
-            "real_estate_firts_text": real_estate_firts_numper,
-            "real_estate_secando_text": real_estate_secando_numper,
-            }
-            st.title("Search Results2")
-            df = pd.read_excel("output/modified_merged_data2.xlsx")
-            search_not_by_deal_nummper(real_estate_firts_numper , real_estate_secando_numper)
-        elif deal_nummper != '' and real_estate_firts_numper != '' and real_estate_secando_numper != '':
-            st.warning(
-                "Plaes enter the deal numper only or the plane number and the land number ", icon='🚨')
-            # df = pd.read_excel("output/modified_merged_data2.xlsx")
-            # search_by_real_estate_firts_text(real_estate_firts_numper)
-        else:
-            st.warning("ERROR", icon="🚨")
+            elif real_estate_secando_numper !='' and deal_nummper == '':
+                input_data = {
+                "real_estate_firts_text": real_estate_firts_numper,
+                "real_estate_secando_text": real_estate_secando_numper,
+                }
+                st.title("Search Results ")
+                df = lode_data()
+                st.table(search_not_by_deal_nummper(real_estate_firts_numper, real_estate_secando_numper))
+            elif deal_nummper != '' and real_estate_firts_numper != '' and real_estate_secando_numper != '':
+                st.warning(
+                    "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
+            else:
+                st.warning(
+                    "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
 
 
 if page == "charts":
@@ -361,7 +346,7 @@ if page == "charts":
         if st.button("2013"):
             with r3_col1:
                 data_2013 = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2013')
+                    'data/2013.xlsx', sheet_name='2013')
                 st.subheader('chart for 2013')
                 with r4_col1:
                     st.bar_chart(data_2013, x='Neighborhood',
@@ -374,7 +359,7 @@ if page == "charts":
         if st.button("2014"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2014')
+                    'data/2013.xlsx', sheet_name='2014')
                 st.subheader('chart for 2014')
                 with r4_col1 :
                     st.bar_chart(data, x='Neighborhood',
@@ -386,7 +371,7 @@ if page == "charts":
         if st.button("2015"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2015')
+                    'data/2013.xlsx', sheet_name='2015')
                 st.subheader('chart for 2015')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -398,7 +383,7 @@ if page == "charts":
         if st.button("2016"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2016')
+                    'data/2013.xlsx', sheet_name='2016')
                 st.subheader('chart for 2016')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -410,7 +395,7 @@ if page == "charts":
         if st.button("2017"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2017')
+                    'data/2013.xlsx', sheet_name='2017')
                 st.subheader('chart for 2017')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -422,7 +407,7 @@ if page == "charts":
         if st.button("2018"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2018')
+                    'data/2013.xlsx', sheet_name='2018')
                 st.subheader('chart for 2018')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -434,7 +419,7 @@ if page == "charts":
         if st.button("2019"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2019')
+                    'data/2013.xlsx', sheet_name='2019')
                 st.subheader('chart for 2019')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -445,7 +430,7 @@ if page == "charts":
         if st.button("2020"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2020')
+                    'data/2013.xlsx', sheet_name='2020')
                 st.subheader('chart for 2020')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -457,7 +442,7 @@ if page == "charts":
         if st.button("2021"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2021')
+                    'data/2013.xlsx', sheet_name='2021')
                 st.subheader('chart for 2021')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -469,7 +454,7 @@ if page == "charts":
         if st.button("2022"):
             with r3_col1:
                 data = pd.read_excel(
-                    'output/2013.xlsx', sheet_name='2022')
+                    'data/2013.xlsx', sheet_name='2022')
                 st.subheader('chart for 2022')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
@@ -489,17 +474,17 @@ type_input_map = {
 }
 
 neighbor_input_map = {
-    'البيان': '01',
-    'الرمال': '02',
-    'الخير': '03',
-    'العارض': '04',
-    'القادسية': '05',
-    'الملقا': '06',
-    'المهديه': '07',
-    'الياسمين': '08',
-    'بنبان': '09',
-    'طويق': '10',
-    'لبن': '11',
+    'Albayan': '01',
+    'Alrimal': '02',
+    'Alkhayr': '03',
+    'Alearid': '04',
+    'Alqadisia': '05',
+    'Almilqa': '06',
+    'Almahdih': '07',
+    'Alyasamin': '08',
+    'Benban': '09',
+    'Tuwaiq': '10',
+    'Laban': '11',
 }
 
 if page == "calc":
@@ -515,7 +500,7 @@ if page == "calc":
             area_input = st.number_input(
                 "What is the area:", min_value=0, value=500)
             neighbor1_input = st.selectbox("Select Neighbor", [
-                                           "البيان", "الرمال", "الخير", "العارض", "القادسية", "الملقا", "المهديه", "الياسمين", "بنبان", "طويق", "لبن"])
+                                           "Albayan", "Alrimal", "Alkhayr", "Alearid", "Alqadisia", "Almilqa", "Almahdih", "Alyasamin", "Benban", "Tuwaiq", "Laban"])
             date_input = st.date_input('Select a date')
 
             # Add the submit button
