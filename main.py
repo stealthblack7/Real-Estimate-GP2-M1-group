@@ -60,7 +60,7 @@ with st.sidebar:
     page = option_menu(None, ["Home", "chat", "map",
                               "deals", "charts", "calc", "Account"],
                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
-    page
+    
 
 @st.cache_data
 def map_data ():
@@ -115,32 +115,34 @@ def search_not_by_deal_nummper(real_estate_firts_text, real_estate_secando_text)
             return info
 
 
+class_map = {
+    'تجاري': 'Commercial',
+    'سكني': 'Residential',
+}
+
+type_map = {
+    '1': 'Apartment',
+    '2': 'House',
+    '3': 'Plot of Land',
+    '4': 'Villa',
+}
+
+neighborhood_map = {
+    'البيان': 'Albayan',
+    'الرمال': 'Alrimal',
+    'الخير': 'Alkhayr',
+    'العارض': 'Alearid',
+    'القادسية': 'Alqadisia',
+    'الملقا': 'Almilqa',
+    'المهدية': 'Almahdih',
+    'الياسمين': 'Alyasamin',
+    'بنبان': 'Benban',
+    'طويق': 'Tuwaiq',
+    'لبن': 'Laban',
+}
+
 def format_match(match_number, row):
-    class_map = {
-        'تجاري': 'Commercial',
-        'سكني': 'Residential',
-    }
-
-    type_map = {
-        'شقة': 'Apartment',
-        'بيت': 'House',
-        'قطعة أرض': 'Plot of Land',
-        'فيلا': 'Villa',
-    }
-
-    neighborhood_map = {
-        'البيان': 'Albayan',
-        'الرمال': 'Alrimal',
-        'الخير': 'Alkhayr',
-        'العارض': 'Alearid',
-        'القادسية': 'Alqadisia',
-        'الملقا': 'Almilqa',
-        'المهدية': 'Almahdih',
-        'الياسمين': 'Alyasamin',
-        'بنبان': 'Benban',
-        'طويق': 'Tuwaiq',
-        'لبن': 'Laban',
-    }
+    
 
     match_info = {
         "Deal Number": row["رقم الصفقة"],
@@ -241,11 +243,10 @@ def load_map():
     m = plot_from_df(df, m)  # plot points
     return m
 
-
 if page == "map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
-
+    
     m = load_map()
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
@@ -256,22 +257,20 @@ if page == "map":
     with r1_col1:
         level1_map_data = st_folium(m, height=520, width=600)
         st.session_state.selected_id = level1_map_data['last_object_clicked_tooltip']
-
         if st.session_state.selected_id is not None:
             try:
-                # Convert to float and then to integer
+        # Convert to float and then to integer
                 selected_id = int(float(st.session_state.selected_id))
                 st.write(f'You Have Selected: {selected_id}')
-                # st.write(f'DataFrame IDs: {df["ID"].values.tolist()}')
-                # Check if the selected 'ID' exists in the DataFrame
+        # Check if the selected 'ID' exists in the DataFrame
                 if selected_id in df['ID'].values:
-                    # Retrieve the selected row from the dataset
+            # Retrieve the selected row from the dataset
                     selected_row = df[df['ID'] == selected_id].iloc[0]
-                    # Display the entire selected row
-                    st.write(selected_row)
-                    # Display latitude and longitude
-                    st.write(
-                f"Latitude: {selected_row['Latitude']}, Longitude: {selected_row['Longitude']}")
+                    selected_row["neighbor"] = neighborhood_map.get(
+                    selected_row["neighbor"], selected_row["neighbor"])
+
+            # Display the entire selected row as a horizontal table
+                    st.table(selected_row)
                 else:
                     st.write("No matching data found for the selected ID.")
             except ValueError:
@@ -280,12 +279,6 @@ if page == "map":
 
 
 
-
-        
-# @st.cache_data
-# def lode_data():
-#     df = pd.read_excel("data/modified_merged_data2.xlsx")
-#     return df 
 
 if page == "deals":
     @st.cache_data
@@ -526,7 +519,6 @@ if page == "calc":
     }
 
 
-    
 # Now, submit_button is accessible globally
     if submit_button:
         # Convert input_data to a JSON-formatted string
