@@ -57,8 +57,8 @@ hide_st_style = """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
 with st.sidebar:
-    page = option_menu(None, ["Home", "chat", "map",
-                              "deals", "charts", "calc", "Account"],
+    page = option_menu(None, ["Home", "Chat", "Map",
+                              "Deals", "Charts", "Calc", "Account"],
                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
     
 
@@ -343,9 +343,9 @@ if page == "charts":
                 st.subheader('chart for 2013')
                 with r4_col1:
                     st.bar_chart(data_2013, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data_2013, x='Neighborhood',
-                                 y='Propertys Price  ',  height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698',  height=350, use_container_width=True)
                 
 
     with r1_col2:
@@ -356,9 +356,9 @@ if page == "charts":
                 st.subheader('chart for 2014')
                 with r4_col1 :
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r1_col3:
         if st.button("2015"):
@@ -368,9 +368,9 @@ if page == "charts":
                 st.subheader('chart for 2015')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r1_col4:
         if st.button("2016"):
@@ -380,9 +380,9 @@ if page == "charts":
                 st.subheader('chart for 2016')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
     
     with r1_col5:
         if st.button("2017"):
@@ -392,9 +392,9 @@ if page == "charts":
                 st.subheader('chart for 2017')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r2_col1:
         if st.button("2018"):
@@ -404,9 +404,9 @@ if page == "charts":
                 st.subheader('chart for 2018')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r2_col2:
         if st.button("2019"):
@@ -416,9 +416,9 @@ if page == "charts":
                 st.subheader('chart for 2019')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
     with r2_col3:
         if st.button("2020"):
             with r3_col1:
@@ -427,9 +427,9 @@ if page == "charts":
                 st.subheader('chart for 2020')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                             y='PropertySelld ', height=350,use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r2_col4:
         if st.button("2021"):
@@ -439,9 +439,9 @@ if page == "charts":
                 st.subheader('chart for 2021')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
     with r2_col5:
         if st.button("2022"):
@@ -451,9 +451,9 @@ if page == "charts":
                 st.subheader('chart for 2022')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 class_input_map = {
     'Commercial': 1,
     'Residential': 2,
