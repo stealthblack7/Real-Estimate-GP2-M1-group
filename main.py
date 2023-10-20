@@ -1,6 +1,6 @@
 import streamlit as st
 import streamlit_authenticator as stauth
-from dependancies import sign_up, fetch_users 
+from dependancies import sign_up, fetch_users
 import dependancies as dep
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -31,12 +31,12 @@ import yaml
 from yaml.loader import SafeLoader
 
 
-st.set_page_config(page_title='Property Insight', initial_sidebar_state='collapsed')
+st.set_page_config(page_title='Property Insight',
+                   initial_sidebar_state='collapsed')
 with st.sidebar:
-    page = option_menu(None, ["Home", "Chat", "Map",
-                              "Deals", "Charts", "Calc", "Account"],
+    page = option_menu(None, ["Home", "chat", "map",
+                              "deals", "charts", "calc", "Account"],
                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
-
 
 
 if page == 'Account':
@@ -54,13 +54,13 @@ if page == 'Account':
         credentials = {'usernames': {}}
         for index in range(len(emails)):
             credentials['usernames'][usernames[index]] = {
-            'name': emails[index], 'password': passwords[index]}
+                'name': emails[index], 'password': passwords[index]}
 
         Authenticator = stauth.Authenticate(
-        credentials, cookie_name='Streamlit', key='abcdef', cookie_expiry_days=4)
+            credentials, cookie_name='Streamlit', key='abcdef', cookie_expiry_days=4)
 
         email, authentication_status, username = Authenticator.login(
-        ':green[Login]', 'main')
+            ':green[Login]', 'main')
 
         info, info1 = st.columns(2)
 
@@ -70,13 +70,13 @@ if page == 'Account':
         if username:
             if username in usernames:
                 if authentication_status:
-                # let User see app
+                    # let User see app
                     st.sidebar.subheader(f'Welcome {username}')
                     Authenticator.logout('Log Out', 'sidebar')
 
                     st.subheader('This is the Accont page')
                     st.markdown(
-                    f"""
+                        f"""
                     ---
                     Welcome {username} ❤️ 
                     
@@ -92,9 +92,9 @@ if page == 'Account':
                 with info:
                     st.warning('Username does not exist, Please Sign up')
 
-
     except:
         st.success('Refresh Page')
+
 
 @st.cache_data
 def map_data():
@@ -163,19 +163,22 @@ type_map = {
     '4': 'Villa',
 }
 
-    neighborhood_map = {
-        'البيان': 'Albayan',
-        'الرمال': 'Alrimal',
-        'الخير': 'Alkhayr',
-        'العارض': 'Alearid',
-        'القادسية': 'Alqadisia',
-        'الملقا': 'Almilqa',
-        'المهدية': 'Almahdih',
-        'الياسمين': 'Alyasamin',
-        'بنبان': 'Benban',
-        'طويق': 'Tuwaiq',
-        'لبن': 'Laban',
-    }
+neighborhood_map = {
+    'البيان': 'Albayan',
+    'الرمال': 'Alrimal',
+    'الخير': 'Alkhayr',
+    'العارض': 'Alearid',
+    'القادسية': 'Alqadisia',
+    'الملقا': 'Almilqa',
+    'المهدية': 'Almahdih',
+    'الياسمين': 'Alyasamin',
+    'بنبان': 'Benban',
+    'طويق': 'Tuwaiq',
+    'لبن': 'Laban',
+}
+
+
+def format_match(match_number, row):
 
     match_info = {
         "Deal Number": row["رقم الصفقة"],
@@ -280,10 +283,11 @@ def load_map():
     m = plot_from_df(df, m)  # plot points
     return m
 
+
 if page == "map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
-    
+
     m = load_map()
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
@@ -296,32 +300,23 @@ if page == "map":
         st.session_state.selected_id = level1_map_data['last_object_clicked_tooltip']
         if st.session_state.selected_id is not None:
             try:
-        # Convert to float and then to integer
+                # Convert to float and then to integer
                 selected_id = int(float(st.session_state.selected_id))
                 st.write(f'You Have Selected: {selected_id}')
         # Check if the selected 'ID' exists in the DataFrame
                 if selected_id in df['ID'].values:
-            # Retrieve the selected row from the dataset
+                    # Retrieve the selected row from the dataset
                     selected_row = df[df['ID'] == selected_id].iloc[0]
-                    # Display the entire selected row
-                    st.write(selected_row)
-                    # Display latitude and longitude
-                    st.write(
-                f"Latitude: {selected_row['Latitude']}, Longitude: {selected_row['Longitude']}")
+                    selected_row["neighbor"] = neighborhood_map.get(
+                        selected_row["neighbor"], selected_row["neighbor"])
+
+            # Display the entire selected row as a horizontal table
+                    st.table(selected_row)
                 else:
                     st.write("No matching data found for the selected ID.")
             except ValueError:
                 st.write("Invalid selected ID.")
 
-
-
-
-
-        
-# @st.cache_data
-# def lode_data():
-#     df = pd.read_excel("data/modified_merged_data2.xlsx")
-#     return df 
 
 if page == "deals":
     @st.cache_data
@@ -349,7 +344,6 @@ if page == "deals":
                 "Enter the land number :", )
         with r2_col1:
             real_estate_numper_search_button = st.form_submit_button("search")
-            
 
     _, r3_col1, _ = st.columns([0.1, 20, 0.1])
     with r3_col1:
@@ -379,7 +373,6 @@ if page == "deals":
             else:
                 st.warning(
                     "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
-    
 
 
 if page == "charts":
@@ -400,9 +393,7 @@ if page == "charts":
                     st.bar_chart(data_2013, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data_2013, x='Neighborhood',
-                                 y='Propertys Price  ',  height=350, use_container_width=True)
-                
-
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
     with r1_col2:
         if st.button("2014"):
             with r3_col1:
@@ -435,10 +426,10 @@ if page == "charts":
                 st.subheader('chart for 2016')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', height=350, use_container_width=True)
-    
+                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
+
     with r1_col5:
         if st.button("2017"):
             with r3_col1:
@@ -459,7 +450,7 @@ if page == "charts":
                 st.subheader('chart for 2018')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
@@ -494,7 +485,7 @@ if page == "charts":
                 st.subheader('chart for 2021')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
@@ -506,7 +497,7 @@ if page == "charts":
                 st.subheader('chart for 2022')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 class_input_map = {
