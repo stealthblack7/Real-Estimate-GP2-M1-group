@@ -1,9 +1,11 @@
-# main3.py
-
+import streamlit as st
+import streamlit_authenticator as stauth
+from dependancies import sign_up, fetch_users 
+import dependancies as dep
 import streamlit as st
 from streamlit_option_menu import option_menu
 import subprocess
-import os 
+import os
 import pydeck as pd
 import json
 import pandas as pd
@@ -23,49 +25,82 @@ import streamlit as st
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 from PIL import Image
-st.set_page_config("Property Insight", layout='centered')
+import yaml
+from yaml.loader import SafeLoader
+import yaml
+from yaml.loader import SafeLoader
 
 
-FACT_BACKGROUND = """
-                    <div style="width: 100%;">
-                        <div style="
-                                    background-color: #ECECEC;
-                                    border: 1px solid #ECECEC;
-                                    padding: 1.5% 1% 1.5% 3.5%;
-                                    border-radius: 10px;
-                                    width: 100%;
-                                    color: white;
-                                    white-space: nowrap;
-                                    ">
-                          <p style="font-size:20px; color: black;">{}</p>
-                        </div>
-                    </div>
-                    """     
-
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            back
-            </style>
-            <body style="background-color: aqua;">
-    
-    
-            </body>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
+st.set_page_config(page_title='Property Insight', initial_sidebar_state='collapsed')
 with st.sidebar:
     page = option_menu(None, ["Home", "Chat", "Map",
                               "Deals", "Charts", "Calc", "Account"],
                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
-    
+
+
+
+if page == 'Account':
+    try:
+        users = fetch_users()
+        emails = []
+        usernames = []
+        passwords = []
+
+        for user in users:
+            emails.append(user['key'])
+            usernames.append(user['username'])
+            passwords.append(user['password'])
+
+        credentials = {'usernames': {}}
+        for index in range(len(emails)):
+            credentials['usernames'][usernames[index]] = {
+            'name': emails[index], 'password': passwords[index]}
+
+        Authenticator = stauth.Authenticate(
+        credentials, cookie_name='Streamlit', key='abcdef', cookie_expiry_days=4)
+
+        email, authentication_status, username = Authenticator.login(
+        ':green[Login]', 'main')
+
+        info, info1 = st.columns(2)
+
+        if not authentication_status:
+            sign_up()
+
+        if username:
+            if username in usernames:
+                if authentication_status:
+                # let User see app
+                    st.sidebar.subheader(f'Welcome {username}')
+                    Authenticator.logout('Log Out', 'sidebar')
+
+                    st.subheader('This is the Accont page')
+                    st.markdown(
+                    f"""
+                    ---
+                    Welcome {username} ❤️ 
+                    
+                    """
+                    )
+                elif not authentication_status:
+                    with info:
+                        st.error('Incorrect Password or username')
+                else:
+                    with info:
+                        st.warning('Please feed in your credentials')
+            else:
+                with info:
+                    st.warning('Username does not exist, Please Sign up')
+
+
+    except:
+        st.success('Refresh Page')
 
 @st.cache_data
-def map_data ():
+def map_data():
     df = pd.read_excel("data/map.xlsx")
     return df
+
 
 column_mapping = {
     'deal_nummper': 'رقم الصفقة',
@@ -74,6 +109,7 @@ column_mapping = {
 
 
 }
+
 
 def search_by_deal_nummper(deal_nummper):
     try:
@@ -87,7 +123,7 @@ def search_by_deal_nummper(deal_nummper):
 
     if filtered_df.empty:
         st.write("No matching data found")
-        
+
     else:
         # Display the matching data in the desired format
         for i, (index, row) in enumerate(filtered_df.iterrows(), 1):
@@ -108,7 +144,7 @@ def search_not_by_deal_nummper(real_estate_firts_text, real_estate_secando_text)
     else:
         # Display the matching data in the desired format with match numbers
         for i, (_, row) in enumerate(filtered_df.iterrows(), 1):
-            w = i 
+            w = i
             st.write("------------------------------")
             st.write(f"\nMatch {w}:")
             info = format_match(i, row)
@@ -127,22 +163,19 @@ type_map = {
     '4': 'Villa',
 }
 
-neighborhood_map = {
-    'البيان': 'Albayan',
-    'الرمال': 'Alrimal',
-    'الخير': 'Alkhayr',
-    'العارض': 'Alearid',
-    'القادسية': 'Alqadisia',
-    'الملقا': 'Almilqa',
-    'المهدية': 'Almahdih',
-    'الياسمين': 'Alyasamin',
-    'بنبان': 'Benban',
-    'طويق': 'Tuwaiq',
-    'لبن': 'Laban',
-}
-
-def format_match(match_number, row):
-    
+    neighborhood_map = {
+        'البيان': 'Albayan',
+        'الرمال': 'Alrimal',
+        'الخير': 'Alkhayr',
+        'العارض': 'Alearid',
+        'القادسية': 'Alqadisia',
+        'الملقا': 'Almilqa',
+        'المهدية': 'Almahdih',
+        'الياسمين': 'Alyasamin',
+        'بنبان': 'Benban',
+        'طويق': 'Tuwaiq',
+        'لبن': 'Laban',
+    }
 
     match_info = {
         "Deal Number": row["رقم الصفقة"],
@@ -160,6 +193,7 @@ def format_match(match_number, row):
     match_df = pd.DataFrame(match_info.items(), columns=["Field", "Value"])
     return match_df
 
+
 if page == "Home":
     st.title("Welcome to the Home Page!")
     st.write("This is where your main content will go.")
@@ -169,6 +203,8 @@ if page == "Home":
 
 openai.api_key = "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"
 chat_history = []
+
+
 def get_response(user_message):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -179,7 +215,7 @@ def get_response(user_message):
         stream=True
 
     )
-    
+
     return response.choices[0].message
 
 
@@ -200,14 +236,14 @@ if page == "chat":
     for message in chat_history:
         st.text(message)
 
+
 @st.cache_data
 def load_df():
     df = pd.read_excel(
-        "data/map.xlsx", usecols=['القطعة', 'N', 'E', 'area', 'neighbor', 'المخطط', 'class', 'Type' , 'ID'])
+        "data/map.xlsx", usecols=['القطعة', 'N', 'E', 'area', 'neighbor', 'المخطط', 'class', 'Type', 'ID'])
     df.rename(columns={'N': 'Latitude', 'القطعة': 'Land', 'المخطط': 'plan',
               'E': 'Longitude'}, inplace=True)
     return df
-
 
 
 def plot_from_df(df, folium_map):
@@ -234,6 +270,7 @@ def create_point_map(df):
     df = geopandas.GeoDataFrame(df, geometry='coordinates')
     df = df.dropna(subset=['Latitude', 'Longitude', 'coordinates'])
     return df
+
 
 @st.cache_resource  # @st.cache_data
 def load_map():
@@ -266,11 +303,11 @@ if page == "map":
                 if selected_id in df['ID'].values:
             # Retrieve the selected row from the dataset
                     selected_row = df[df['ID'] == selected_id].iloc[0]
-                    selected_row["neighbor"] = neighborhood_map.get(
-                    selected_row["neighbor"], selected_row["neighbor"])
-
-            # Display the entire selected row as a horizontal table
-                    st.table(selected_row)
+                    # Display the entire selected row
+                    st.write(selected_row)
+                    # Display latitude and longitude
+                    st.write(
+                f"Latitude: {selected_row['Latitude']}, Longitude: {selected_row['Longitude']}")
                 else:
                     st.write("No matching data found for the selected ID.")
             except ValueError:
@@ -280,61 +317,79 @@ if page == "map":
 
 
 
+        
+# @st.cache_data
+# def lode_data():
+#     df = pd.read_excel("data/modified_merged_data2.xlsx")
+#     return df 
+
 if page == "deals":
     @st.cache_data
     def lode_data():
         df = pd.read_excel("data/modified_merged_data2.xlsx")
         return df
-    
+
     df = load_df()
     st.title("deals")
-    
 
     with st.form("deal_nummper_user_inputs"):
-        _ , r1_col1 , r1_col2 , r1_col3 , r1_col4 , _ = st.columns([1, 5, 2, 5,5, 1])
-        _ , r2_col1 , r2_col2 , r2_col3 , r2_col4 , _ = st.columns([1, 5, 2, 5, 5, 1])
+        _, r1_col1, r1_col2, r1_col3, r1_col4, _ = st.columns(
+            [1, 5, 2, 5, 5, 1])
+        _, r2_col1, r2_col2, r2_col3, r2_col4, _ = st.columns(
+            [1, 5, 2, 5, 5, 1])
         with r1_col1:
-            deal_nummper = st.text_input("Enter the deal number :" )
+            deal_nummper = st.text_input("Enter the deal number :")
         with r1_col2:
             st.title("OR")
-        with r1_col3 :
+        with r1_col3:
             real_estate_firts_numper = st.text_input(
                 "  Enter the plan number :", )
         with r1_col4:
             real_estate_secando_numper = st.text_input(
                 "Enter the land number :", )
-        with r2_col1 :
+        with r2_col1:
             real_estate_numper_search_button = st.form_submit_button("search")
+            
 
     _, r3_col1, _ = st.columns([0.1, 20, 0.1])
     with r3_col1:
         if real_estate_numper_search_button:
-            if deal_nummper !='' and real_estate_firts_numper == '' and real_estate_secando_numper == '':
+            if deal_nummper != '' and real_estate_firts_numper == '' and real_estate_secando_numper == '':
                 st.title("Search Results ")
                 df = lode_data()
-                st.table(search_by_deal_nummper(int(deal_nummper)))
-            
-            elif real_estate_secando_numper !='' and deal_nummper == '':
+                deal = search_by_deal_nummper(int(deal_nummper))
+                st.table(deal)
+                like = st.button('like')
+                if like:
+                    dep.insert_deal(deal)
+
+            elif real_estate_secando_numper != '' and deal_nummper == '':
                 input_data = {
-                "real_estate_firts_text": real_estate_firts_numper,
-                "real_estate_secando_text": real_estate_secando_numper,
+                    "real_estate_firts_text": real_estate_firts_numper,
+                    "real_estate_secando_text": real_estate_secando_numper,
                 }
                 st.title("Search Results ")
                 df = lode_data()
-                st.table(search_not_by_deal_nummper(real_estate_firts_numper, real_estate_secando_numper))
+                deal = search_not_by_deal_nummper(
+                    real_estate_firts_numper, real_estate_secando_numper)
+                st.table(deal)
             elif deal_nummper != '' and real_estate_firts_numper != '' and real_estate_secando_numper != '':
                 st.warning(
                     "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
             else:
                 st.warning(
                     "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
+    
 
 
 if page == "charts":
-    _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns([2, 3, 3, 3, 3, 3, 2])
-    _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns([2, 3, 3, 3, 3, 3, 2])
-    _, r3_col1, _ = st.columns([6, 10, 1]) 
+    _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns(
+        [2, 3, 3, 3, 3, 3, 2])
+    _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns(
+        [2, 3, 3, 3, 3, 3, 2])
+    _, r3_col1, _ = st.columns([6, 10, 1])
     _, r4_col1, _ = st.columns([1, 10, 1])
+
     with r1_col1:
         if st.button("2013"):
             with r3_col1:
@@ -345,7 +400,7 @@ if page == "charts":
                     st.bar_chart(data_2013, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data_2013, x='Neighborhood',
-                                 y='Propertys Price  ', color='#3D6698',  height=350, use_container_width=True)
+                                 y='Propertys Price  ',  height=350, use_container_width=True)
                 
 
     with r1_col2:
@@ -354,7 +409,7 @@ if page == "charts":
                 data = pd.read_excel(
                     'data/2013.xlsx', sheet_name='2014')
                 st.subheader('chart for 2014')
-                with r4_col1 :
+                with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -380,9 +435,9 @@ if page == "charts":
                 st.subheader('chart for 2016')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
+                                 y='PropertySelld ', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
-                                 y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
+                                 y='Propertys Price  ', height=350, use_container_width=True)
     
     with r1_col5:
         if st.button("2017"):
@@ -404,7 +459,7 @@ if page == "charts":
                 st.subheader('chart for 2018')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
+                                 y='PropertySelld ', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
@@ -439,7 +494,7 @@ if page == "charts":
                 st.subheader('chart for 2021')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
+                                 y='PropertySelld ', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
@@ -451,7 +506,7 @@ if page == "charts":
                 st.subheader('chart for 2022')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ',  color='#3D6698', height=350, use_container_width=True)
+                                 y='PropertySelld ', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 class_input_map = {
@@ -537,14 +592,14 @@ if page == "calc":
                     predictions = json.loads(json_acceptable_string)
 
                 # Display predictions
-                    
+
                     _, r2_col1,  _ = st.columns(
                         [1, 5, 1])
                     with r2_col1:
                         st.title("Prediction")
                     # info sidebar
                         st.markdown(FACT_BACKGROUND.format(
-                        predictions+"   \tSR"), unsafe_allow_html=True)
+                            predictions+"   \tSR"), unsafe_allow_html=True)
                     # st.text(predictions+" SR")
                 else:
                     st.error("The AI script returned empty output.")
@@ -553,5 +608,3 @@ if page == "calc":
         else:
             # Handle any errors that occurred during script execution
             st.error("An error occurred while running the AI script.")
-
-
