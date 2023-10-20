@@ -1,0 +1,45 @@
+dic.st-emotion-cache-6qob1r {
+    background-color: aliceblue;
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: overlay;
+}
+
+div.st-emotion-cache-1n76uvr {
+    width: 704px;
+    position: relative;
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    gap: 1rem;
+}
+div.st-emotion-cache-1ec096l {
+    font-size: 1rem;
+    font-family: "Source Sans Pro", sans-serif;
+    padding: 0.25rem 0.375rem;
+    line-height: 1.5;
+    overflow: overlay;
+}
+
+div.st-emotion-cache-zt5igj {
+    background-color: red;
+    color: black;
+    position: relative;
+    left: calc(-3rem);
+    width: calc(100% + 2.5rem + 0.5rem);
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    overflow: visible;
+
+}
+
+div.menu .container-xxl[data-v-5af006b8] {
+    background-color: beige;
+    border-radius: 0.5rem;
+}
+
+div.st-emotion-cache--10oheav.existed{
+    background-color: blue;
+}
