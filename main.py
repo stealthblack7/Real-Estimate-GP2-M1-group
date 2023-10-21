@@ -30,7 +30,6 @@ import requests
 import time
 
 
-
 openai.api_key = os.getenv(
     "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")
 
@@ -229,6 +228,7 @@ openai.api_key = "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"
 with open("info.txt", "r") as info_file:
     website_info = info_file.read()
 
+
 if page == "ChatBot":
     st.title("Chat with ChatGPT")
 
@@ -257,6 +257,12 @@ if page == "ChatBot":
             conversation_history.append(
                 {"role": "assistant", "content": chatbot_reply})
 
+            # Check if the user's question is about the website name
+            if "website name" in user_message.lower():
+                # If the user asks about the website name, explicitly provide the information
+                conversation_history.append(
+                    {"role": "assistant", "content": "The name of the website is Property Insight"})
+
         except openai.error.RateLimitError as e:
             st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
             time.sleep(60)  # Wait for a minute before retrying
@@ -264,62 +270,17 @@ if page == "ChatBot":
         # Display the entire chat history as a conversation
         for message in conversation_history:
             if message["role"] == "user":
+                # Display user message
                 st.markdown(
-                        f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
-                        unsafe_allow_html=True
-                    )
+                    f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
             else:
                 st.markdown(
-                    f'<div style="background-color: #5F8ABF; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
                     unsafe_allow_html=True
                 )
 
-# st.markdown(
-#     f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
-#     unsafe_allow_html=True
-# )
-    # # Initialize an empty conversation history
-    # conversation_history = []
-
-    # # Text input for user's message with a unique key
-    # user_message = st.text_input("send a message:", key="user_message_input")
-
-    # if st.button("Send"):
-    #     # Append the user's message to the conversation history
-    #     conversation_history.append({"role": "user", "content": user_message})
-
-    #     try:
-    #         # Generate a response from OpenAI
-    #         response = openai.ChatCompletion.create(
-    #             model="gpt-3.5-turbo",
-    #             messages=conversation_history
-    #         )
-
-    #         # Extract and display the chatbot's reply
-    #         chatbot_reply = response.choices[0].message["content"]
-
-    #         # Append the chatbot's reply to the conversation history
-    #         conversation_history.append(
-    #             {"role": "assistant", "content": chatbot_reply})
-
-    #     except openai.error.RateLimitError as e:
-    #         st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
-    #         time.sleep(60)  # Wait for a minute before retrying
-
-    #     # Display the entire chat history as a conversation
-        
-    #     for message in conversation_history:
-    #         if message["role"] == "user":
-    #             st.markdown(
-    #                 f'<div style="background-color: #465362; color: white; padding: 10px; border-radius: 5px;">Your message: {message["content"]}</div>',
-    #                 unsafe_allow_html=True
-    #             )
-    #         else:
-    #             # Display chatbot response in a styled div
-    #             st.markdown(
-    #                 f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
-    #                 unsafe_allow_html=True
-    #             )
 
 
     
@@ -671,15 +632,13 @@ if page == "Calculator":
                     _, r2_col1,  _ = st.columns(
                         [1, 5, 1])
                     with r2_col1:
-                        st.title("Prediction")
-                    # info sidebar
-                        st.markdown(FACT_BACKGROUND.format(
-                            predictions+"   \tSR"), unsafe_allow_html=True)
-                    # st.text(predictions+" SR")
+                        st.header("Prediction")
+                        st.subheader(predictions+" SR")
                 else:
                     st.error("The AI script returned empty output.")
             except json.JSONDecodeError as e:
                 st.error(f"Error decoding JSON from the AI script: {str(e)}")
+            
         else:
             # Handle any errors that occurred during script execution
             st.error("An error occurred while running the AI script.")

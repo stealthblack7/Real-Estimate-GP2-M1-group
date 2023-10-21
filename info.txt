@@ -1,4 +1,8 @@
-this app called Property Insight
+The name of the website is Property Insight
+
+What is the name of this website?
+The name of the website is Property Insight
+
 
 
 Our project is a smart web-based real estate application providing investors with 
@@ -13,5 +17,5 @@ its potential to transform real estate investing.
 
 
 Recollected our data from a website called aqarsas.sa
- and the website collected the data from Ministry of Justic ,  Ministry of Municipal and Rural Affairs and Housing, , and Riyadh Municipality.
-  We contacted them and they kindly provided us with the last 10 years of data in Riyadh city , which is about 776800 records
+and the website collected the data from Ministry of Justic ,  Ministry of Municipal and Rural Affairs and Housing, , and Riyadh Municipality.
+We contacted them and they kindly provided us with the last 10 years of data in Riyadh city , which is about 776800 records
