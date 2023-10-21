@@ -1,0 +1,17 @@
+this app called Property Insight
+
+
+Our project is a smart web-based real estate application providing investors with 
+comprehensive, current information on property deals and trends. It offers user
+friendly search capabilities based on property numbers and map locations, and 
+supplies growth and trend data for informed decision-making. Utilizing AI, we 
+predict future property prices based on historic data and market trends. Our system 
+features a LLMs-powered Chatbot, enabling users to interact in natural language. 
+This Graduation Project Report will present an overview of our "Real Estate Investor 
+Advisor" website, the development challenges, solutions, and future, demonstrating 
+its potential to transform real estate investing.
+
+
+Recollected our data from a website called aqarsas.sa
+ and the website collected the data from Ministry of Justic ,  Ministry of Municipal and Rural Affairs and Housing, , and Riyadh Municipality.
+  We contacted them and they kindly provided us with the last 10 years of data in Riyadh city , which is about 776800 records

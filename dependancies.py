@@ -4,6 +4,8 @@ import datetime
 import re
 from deta import Deta
 
+
+# https://deta.space/collections/d08jj5wz8ov
 DETA_KEY = 'd08jj5wz8ov_ouzttscZTALdirw8VBYg6M3en9QbwcLc'
 
 deta = Deta(DETA_KEY)

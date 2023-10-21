@@ -25,19 +25,37 @@ import streamlit as st
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 from PIL import Image
-import yaml
-from yaml.loader import SafeLoader
-import yaml
-from yaml.loader import SafeLoader
+import openai
+import requests
+import time
 
+
+
+openai.api_key = os.getenv(
+    "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")
 
 st.set_page_config(page_title='Property Insight',
                    initial_sidebar_state='collapsed')
-with st.sidebar:
-    page = option_menu(None, ["Home", "chat", "map",
-                              "deals", "charts", "calc", "Account"],
-                       icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
+# with st.sidebar:
+#     page = option_menu(None, ["Home", "chat", "map",
+#                               "deals", "charts", "calc", "Account"],
+#                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
 
+page = option_menu(None, ["Home", "ChatBot", "Property Map",
+                               "Deals", "Charts", "Calculator", "Account"],
+                        icons=['house', 'chat-left-dots', 'geo-alt',
+                               'archive', 'bar-chart-line', 'calculator', 'person'],
+                        menu_icon="cast", default_index=0, orientation="horizontal")
+
+#    header {visibility: hidden}
+
+hide_st_style = """
+            <style>
+            MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 if page == 'Account':
     try:
@@ -204,41 +222,107 @@ if page == "Home":
         for i in range(1, 6):
             st.write(f"\nMatch {i}:")
 
-openai.api_key = "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"
-chat_history = []
 
+openai.api_key = "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"
 
-def get_response(user_message):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello!"}
-        ],
-        stream=True
+# Read website information from a file
+with open("info.txt", "r") as info_file:
+    website_info = info_file.read()
 
-    )
-
-    return response.choices[0].message
-
-
-if page == "chat":
+if page == "ChatBot":
     st.title("Chat with ChatGPT")
 
-    # Create a text input widget for user input
-    user_input = st.text_input("You:", "")
+    # Initialize an empty conversation history
+    conversation_history = []
 
-    # Handle user input and display the conversation
+    # Text input for user's message with a unique key
+    user_message = st.text_input(
+        "", key="user_message_input", placeholder="Send a message")
+
     if st.button("Send"):
-        user_message = user_input.strip()
-        chat_history.append(f"You: {user_message}")
-        response = get_response(user_message)
-        chat_history.append(f"ChatGPT: {response}")
+        # Append the user's message to the conversation history
+        conversation_history.append({"role": "user", "content": user_message})
 
-    # Display the chat history
-    for message in chat_history:
-        st.text(message)
+        try:
+            # Generate a response from OpenAI
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=conversation_history
+            )
 
+            # Extract and display the chatbot's reply
+            chatbot_reply = response.choices[0].message["content"]
+
+            # Append the chatbot's reply to the conversation history
+            conversation_history.append(
+                {"role": "assistant", "content": chatbot_reply})
+
+        except openai.error.RateLimitError as e:
+            st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
+            time.sleep(60)  # Wait for a minute before retrying
+
+        # Display the entire chat history as a conversation
+        for message in conversation_history:
+            if message["role"] == "user":
+                st.markdown(
+                        f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.markdown(
+                    f'<div style="background-color: #5F8ABF; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
+
+# st.markdown(
+#     f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+#     unsafe_allow_html=True
+# )
+    # # Initialize an empty conversation history
+    # conversation_history = []
+
+    # # Text input for user's message with a unique key
+    # user_message = st.text_input("send a message:", key="user_message_input")
+
+    # if st.button("Send"):
+    #     # Append the user's message to the conversation history
+    #     conversation_history.append({"role": "user", "content": user_message})
+
+    #     try:
+    #         # Generate a response from OpenAI
+    #         response = openai.ChatCompletion.create(
+    #             model="gpt-3.5-turbo",
+    #             messages=conversation_history
+    #         )
+
+    #         # Extract and display the chatbot's reply
+    #         chatbot_reply = response.choices[0].message["content"]
+
+    #         # Append the chatbot's reply to the conversation history
+    #         conversation_history.append(
+    #             {"role": "assistant", "content": chatbot_reply})
+
+    #     except openai.error.RateLimitError as e:
+    #         st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
+    #         time.sleep(60)  # Wait for a minute before retrying
+
+    #     # Display the entire chat history as a conversation
+        
+    #     for message in conversation_history:
+    #         if message["role"] == "user":
+    #             st.markdown(
+    #                 f'<div style="background-color: #465362; color: white; padding: 10px; border-radius: 5px;">Your message: {message["content"]}</div>',
+    #                 unsafe_allow_html=True
+    #             )
+    #         else:
+    #             # Display chatbot response in a styled div
+    #             st.markdown(
+    #                 f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+    #                 unsafe_allow_html=True
+    #             )
+
+
+    
 
 @st.cache_data
 def load_df():
@@ -284,7 +368,7 @@ def load_map():
     return m
 
 
-if page == "map":
+if page == "Property Map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
 
@@ -318,7 +402,7 @@ if page == "map":
                 st.write("Invalid selected ID.")
 
 
-if page == "deals":
+if page == "Deals":
     @st.cache_data
     def lode_data():
         df = pd.read_excel("data/modified_merged_data2.xlsx")
@@ -375,7 +459,7 @@ if page == "deals":
                     "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
 
 
-if page == "charts":
+if page == "Charts":
     _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns(
         [2, 3, 3, 3, 3, 3, 2])
     _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns(
@@ -526,8 +610,8 @@ neighbor_input_map = {
     'Laban': '11',
 }
 
-if page == "calc":
-    st.title("calc")
+if page == "Calculator":
+    st.title("Calculator")
     _, r2_col1, _ = st.columns([1, 5, 1])
 
     with r2_col1:
