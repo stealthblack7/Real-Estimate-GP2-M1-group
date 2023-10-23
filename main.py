@@ -398,9 +398,7 @@ if page == "Deals":
                 df = lode_data()
                 deal = search_by_deal_nummper(int(deal_nummper))
                 st.table(deal)
-                like = st.button('like')
-                if like:
-                    dep.insert_deal(deal)
+            
 
             elif real_estate_secando_numper != '' and deal_nummper == '':
                 input_data = {
