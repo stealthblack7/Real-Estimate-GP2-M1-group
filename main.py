@@ -1,6 +1,6 @@
 import streamlit as st
 import streamlit_authenticator as stauth
-from dependancies import sign_up, fetch_users 
+from dependancies import sign_up, fetch_users
 import dependancies as dep
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -25,19 +25,36 @@ import streamlit as st
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 from PIL import Image
-import yaml
-from yaml.loader import SafeLoader
-import yaml
-from yaml.loader import SafeLoader
+import openai
+import requests
+import time
 
 
-st.set_page_config(page_title='Property Insight', initial_sidebar_state='collapsed')
-with st.sidebar:
-    page = option_menu(None, ["Home", "chat", "map",
-                              "deals", "charts", "calc", "Account"],
-                       icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
+openai.api_key = os.getenv(
+    "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")
 
+st.set_page_config(page_title='Property Insight',
+                   initial_sidebar_state='collapsed')
+# with st.sidebar:
+#     page = option_menu(None, ["Home", "chat", "map",
+#                               "deals", "charts", "calc", "Account"],
+#                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
 
+page = option_menu(None, ["Home", "ChatBot", "Property Map",
+                               "Deals", "Charts", "Calculator", "Account"],
+                        icons=['house', 'chat-left-dots', 'geo-alt',
+                               'archive', 'bar-chart-line', 'calculator', 'person'],
+                        menu_icon="cast", default_index=0, orientation="horizontal")
+
+#    header {visibility: hidden}
+
+hide_st_style = """
+            <style>
+            MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 if page == 'Account':
     try:
@@ -54,13 +71,13 @@ if page == 'Account':
         credentials = {'usernames': {}}
         for index in range(len(emails)):
             credentials['usernames'][usernames[index]] = {
-            'name': emails[index], 'password': passwords[index]}
+                'name': emails[index], 'password': passwords[index]}
 
         Authenticator = stauth.Authenticate(
-        credentials, cookie_name='Streamlit', key='abcdef', cookie_expiry_days=4)
+            credentials, cookie_name='Streamlit', key='abcdef', cookie_expiry_days=4)
 
         email, authentication_status, username = Authenticator.login(
-        ':green[Login]', 'main')
+            ':green[Login]', 'main')
 
         info, info1 = st.columns(2)
 
@@ -70,13 +87,13 @@ if page == 'Account':
         if username:
             if username in usernames:
                 if authentication_status:
-                # let User see app
+                    # let User see app
                     st.sidebar.subheader(f'Welcome {username}')
                     Authenticator.logout('Log Out', 'sidebar')
 
                     st.subheader('This is the Accont page')
                     st.markdown(
-                    f"""
+                        f"""
                     ---
                     Welcome {username} ❤️ 
                     
@@ -92,9 +109,9 @@ if page == 'Account':
                 with info:
                     st.warning('Username does not exist, Please Sign up')
 
-
     except:
         st.success('Refresh Page')
+
 
 @st.cache_data
 def map_data():
@@ -204,41 +221,69 @@ if page == "Home":
         for i in range(1, 6):
             st.write(f"\nMatch {i}:")
 
-openai.api_key = "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"
-chat_history = []
+
+openai.api_key = "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"
+
+# Read website information from a file
+with open("info.txt", "r") as info_file:
+    website_info = info_file.read()
 
 
-def get_response(user_message):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello!"}
-        ],
-        stream=True
-
-    )
-
-    return response.choices[0].message
-
-
-if page == "chat":
+if page == "ChatBot":
     st.title("Chat with ChatGPT")
 
-    # Create a text input widget for user input
-    user_input = st.text_input("You:", "")
+    # Initialize an empty conversation history
+    conversation_history = []
 
-    # Handle user input and display the conversation
+    # Text input for user's message with a unique key
+    user_message = st.text_input(
+        "", key="user_message_input", placeholder="Send a message")
+
     if st.button("Send"):
-        user_message = user_input.strip()
-        chat_history.append(f"You: {user_message}")
-        response = get_response(user_message)
-        chat_history.append(f"ChatGPT: {response}")
+        # Append the user's message to the conversation history
+        conversation_history.append({"role": "user", "content": user_message})
 
-    # Display the chat history
-    for message in chat_history:
-        st.text(message)
+        try:
+            # Generate a response from OpenAI
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=conversation_history
+            )
 
+            # Extract and display the chatbot's reply
+            chatbot_reply = response.choices[0].message["content"]
+
+            # Append the chatbot's reply to the conversation history
+            conversation_history.append(
+                {"role": "assistant", "content": chatbot_reply})
+
+            # Check if the user's question is about the website name
+            if "website name" in user_message.lower():
+                # If the user asks about the website name, explicitly provide the information
+                conversation_history.append(
+                    {"role": "assistant", "content": "The name of the website is Property Insight"})
+
+        except openai.error.RateLimitError as e:
+            st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
+            time.sleep(60)  # Wait for a minute before retrying
+
+        # Display the entire chat history as a conversation
+        for message in conversation_history:
+            if message["role"] == "user":
+                # Display user message
+                st.markdown(
+                    f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
+
+
+
+    
 
 @st.cache_data
 def load_df():
@@ -284,7 +329,7 @@ def load_map():
     return m
 
 
-if page == "map":
+if page == "Property Map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
 
@@ -318,7 +363,7 @@ if page == "map":
                 st.write("Invalid selected ID.")
 
 
-if page == "deals":
+if page == "Deals":
     @st.cache_data
     def lode_data():
         df = pd.read_excel("data/modified_merged_data2.xlsx")
@@ -344,7 +389,6 @@ if page == "deals":
                 "Enter the land number :", )
         with r2_col1:
             real_estate_numper_search_button = st.form_submit_button("search")
-            
 
     _, r3_col1, _ = st.columns([0.1, 20, 0.1])
     with r3_col1:
@@ -354,9 +398,7 @@ if page == "deals":
                 df = lode_data()
                 deal = search_by_deal_nummper(int(deal_nummper))
                 st.table(deal)
-                like = st.button('like')
-                if like:
-                    dep.insert_deal(deal)
+            
 
             elif real_estate_secando_numper != '' and deal_nummper == '':
                 input_data = {
@@ -374,10 +416,9 @@ if page == "deals":
             else:
                 st.warning(
                     "Plaes enter the deal numper only)(ex.5417889) or the plane number and the land number(ex.2566/ أ and 3783/2 ) ", icon='🚨')
-    
 
 
-if page == "charts":
+if page == "Charts":
     _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns(
         [2, 3, 3, 3, 3, 3, 2])
     _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns(
@@ -452,7 +493,7 @@ if page == "charts":
                 st.subheader('chart for 2018')
                 with r4_col1:
                     st.bar_chart(data, x='Neighborhood',
-                                 y='PropertySelld ', color='#3D6698',height=350, use_container_width=True)
+                                 y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
@@ -528,8 +569,8 @@ neighbor_input_map = {
     'Laban': '11',
 }
 
-if page == "calc":
-    st.title("calc")
+if page == "Calculator":
+    st.title("Calculator")
     _, r2_col1, _ = st.columns([1, 5, 1])
 
     with r2_col1:
@@ -589,15 +630,13 @@ if page == "calc":
                     _, r2_col1,  _ = st.columns(
                         [1, 5, 1])
                     with r2_col1:
-                        st.title("Prediction")
-                    # info sidebar
-                        st.markdown(FACT_BACKGROUND.format(
-                            predictions+"   \tSR"), unsafe_allow_html=True)
-                    # st.text(predictions+" SR")
+                        st.header("Prediction")
+                        st.subheader(predictions+" SR")
                 else:
                     st.error("The AI script returned empty output.")
             except json.JSONDecodeError as e:
                 st.error(f"Error decoding JSON from the AI script: {str(e)}")
+            
         else:
             # Handle any errors that occurred during script execution
             st.error("An error occurred while running the AI script.")
