@@ -1,3 +1,5 @@
+#  main.py
+
 import streamlit as st
 import streamlit_authenticator as stauth
 from dependancies import sign_up, fetch_users
@@ -88,17 +90,14 @@ if page == 'Account':
             if username in usernames:
                 if authentication_status:
                     # let User see app
-                    st.sidebar.subheader(f'Welcome {username}')
-                    Authenticator.logout('Log Out', 'sidebar')
-
-                    st.subheader('This is the Accont page')
+                    st.subheader('Accont')
                     st.markdown(
                         f"""
                     ---
                     Welcome {username} ❤️ 
-                    
                     """
                     )
+                    Authenticator.logout('Log Out')
                 elif not authentication_status:
                     with info:
                         st.error('Incorrect Password or username')
@@ -222,7 +221,7 @@ if page == "Home":
             st.write(f"\nMatch {i}:")
 
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Read website information from a file
 with open("info.txt", "r") as info_file:
