@@ -29,6 +29,7 @@ from streamlit_folium import st_folium
 from PIL import Image
 import openai
 import requests
+import datetime
 import time
 
 #
@@ -57,6 +58,73 @@ hide_st_style = """
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
+class_input_map = {
+    'Commercial': 1,
+    'Residential': 2,
+}
+
+type_input_map = {
+    'Apartment': 1,
+    'House': 2,
+    'Plot of Land': 3,
+    'Villa': 4,
+}
+
+neighbor_input_map = {
+    'Albayan': '01',
+    'Alrimal': '02',
+    'Alkhayr': '03',
+    'Alearid': '04',
+    'Alqadisia': '05',
+    'Almilqa': '06',
+    'Almahdih': '07',
+    'Alyasamin': '08',
+    'Benban': '09',
+    'Tuwaiq': '10',
+    'Laban': '11',
+}
+
+
+def user_inputs():
+    with st.form("user_inputs"):
+        class1_input = st.selectbox(
+            "Select Class:", ["Commercial", "Residential"])
+        type1_input = st.selectbox(
+            "Select Type:", ["Apartment", "House", "Plot of Land", "Villa"])
+        area_input = st.number_input(
+            "What is the area:", min_value=0, value=500)
+        neighbor1_input = st.selectbox("Select Neighbor", [
+            "Albayan", "Alrimal", "Alkhayr", "Alearid", "Alqadisia", "Almilqa", "Almahdih", "Alyasamin", "Benban", "Tuwaiq", "Laban"])
+        date_input = st.date_input('Select a date')
+
+        # Add the submit button
+        submit_button = st.form_submit_button("Submit")
+    return submit_button, class1_input, type1_input, area_input, neighbor1_input, date_input
+
+
+def input_conv(class1_input, type1_input, area_input, neighbor1_input, date_input):
+    class_input = class_input_map[class1_input]
+    type_input = type_input_map[type1_input]
+    neighbor_input = neighbor_input_map[neighbor1_input]
+
+    # Extract year, month, and day from the date input
+    year_input = date_input.year
+    month_input = date_input.month
+    day_input = date_input.day
+
+    input_data = {
+        'التصنيف2': int(class_input),
+        'النوع2': int(type_input),
+        'area': int(area_input),
+        'الحي2': int(neighbor_input),
+        'dd': int(day_input),
+        'mm': int(month_input),
+        'yyyy': int(year_input),
+    }
+    return input_data
+
+
+
 
 if page == 'Account':
     try:
@@ -328,6 +396,42 @@ def load_map():
     return m
 
 
+def predict(input_data , flag):
+    input_data_json = json.dumps(input_data)
+
+    # Call ai6-6-22.py with the input data as an argument
+    result = subprocess.run(
+        ["python", "ai.py", input_data_json], capture_output=True, text=True)
+
+    if result.returncode == 0:
+        #    try:
+                # Check if the output is not empty
+                if result.stdout:
+                    # Replace single quotes with double quotes and then parse as JSON
+                    json_acceptable_string = result.stdout.replace("'", "\"")
+                    predictions = json.loads(json_acceptable_string)
+
+                # Display predictions
+                    if flag :
+                        _, r2_col1,  _ = st.columns(
+                        [1, 5, 1])
+                        with r2_col1:
+                            st.header("Prediction")
+                            st.subheader(predictions+" SR")
+                    elif flag == False:
+                        _, r1_col1, r1_col2, _ = st.columns([1, 5, 5, 1])
+                        with r1_col1:
+                            st.header("Prediction")
+                            st.subheader(predictions+" SR")
+                    else:
+                        st.error("The AI script returned empty output.")
+            # except json.JSONDecodeError as e:
+            #     st.error(f"Error decoding JSON from the AI script: {str(e)}")
+
+    else:
+           # Handle any errors that occurred during script execution
+           st.error("An error occurred while running the AI script.")
+
 if page == "Property Map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
@@ -346,7 +450,6 @@ if page == "Property Map":
             try:
                 # Convert to float and then to integer
                 selected_id = int(float(st.session_state.selected_id))
-                st.write(f'You Have Selected: {selected_id}')
         # Check if the selected 'ID' exists in the DataFrame
                 if selected_id in df['ID'].values:
                     # Retrieve the selected row from the dataset
@@ -355,7 +458,30 @@ if page == "Property Map":
                         selected_row["neighbor"], selected_row["neighbor"])
 
             # Display the entire selected row as a horizontal table
-                    st.table(selected_row)
+                    _, r1_col1,r1_col2, _ = st.columns([1, 5,5, 1])
+                    _, r2_col1, _ = st.columns([1, 10, 1])
+                    r1_col1.header('Land')
+                    r1_col2.header('Plan')
+                    r1_col1.subheader(str(selected_row['Land']))
+                    r1_col2.subheader(str(selected_row['plan']))
+                    r1_col1.header('Class')
+                    r1_col2.header('Type')
+                    r1_col1.subheader(str(selected_row['class']))
+                    r1_col2.subheader(str(selected_row['Type']))
+                    r1_col1.header('Neighbor')
+                    r1_col2.header('Area')
+                    r1_col1.subheader(str(selected_row['neighbor']))
+                    r1_col2.subheader(str(selected_row['area']))
+                    current_date = datetime.date.today()
+
+                    # Format the current date as "YYYY/MM/DD"
+                    formatted_date = current_date.strftime("%Y/%m/%d")
+                    with r2_col1 :
+                        input_data = (input_conv(selected_row['class'], selected_row['Type'],
+                                             selected_row['area'], selected_row['neighbor'], date_input=st.date_input("")))
+                    predict(input_data , False)
+
+                    
                 else:
                     st.write("No matching data found for the selected ID.")
             except ValueError:
@@ -542,107 +668,20 @@ if page == "Charts":
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
-class_input_map = {
-    'Commercial': 1,
-    'Residential': 2,
-}
 
-type_input_map = {
-    'Apartment': 1,
-    'House': 2,
-    'Plot of Land': 3,
-    'Villa': 4,
-}
 
-neighbor_input_map = {
-    'Albayan': '01',
-    'Alrimal': '02',
-    'Alkhayr': '03',
-    'Alearid': '04',
-    'Alqadisia': '05',
-    'Almilqa': '06',
-    'Almahdih': '07',
-    'Alyasamin': '08',
-    'Benban': '09',
-    'Tuwaiq': '10',
-    'Laban': '11',
-}
-def user_inputs ():
-    with st.form("user_inputs"):
-        class1_input = st.selectbox(
-            "Select Class:", ["Commercial", "Residential"])
-        type1_input = st.selectbox(
-            "Select Type:", ["Apartment", "House", "Plot of Land", "Villa"])
-        area_input = st.number_input(
-            "What is the area:", min_value=0, value=500)
-        neighbor1_input = st.selectbox("Select Neighbor", [
-            "Albayan", "Alrimal", "Alkhayr", "Alearid", "Alqadisia", "Almilqa", "Almahdih", "Alyasamin", "Benban", "Tuwaiq", "Laban"])
-        date_input = st.date_input('Select a date')
 
-        # Add the submit button
-        submit_button = st.form_submit_button("Submit")
-    class_input = class_input_map[class1_input]
-    type_input = type_input_map[type1_input]
-    neighbor_input = neighbor_input_map[neighbor1_input]
 
-    # Extract year, month, and day from the date input
-    year_input = date_input.year
-    month_input = date_input.month
-    day_input = date_input.day
 
-    input_data = {
-        'التصنيف2': int(class_input),
-        'النوع2': int(type_input),
-        'area': int(area_input),
-        'الحي2': int(neighbor_input),
-        'dd': int(day_input),
-        'mm': int(month_input),
-        'yyyy': int(year_input),
-    }
-    return submit_button , input_data
 
 if page == "Calculator":
     st.title("Calculator")
     _, r2_col1, _ = st.columns([1, 5, 1])
 
     with r2_col1:
-        submit_button, input_data = user_inputs()
-        
+        submit_button, class1_input, type1_input, area_input, neighbor1_input, date_input = user_inputs()
+        input_data = input_conv(class1_input, type1_input,
+                                area_input, neighbor1_input, date_input)
+    if submit_button : 
+        predict(input_data , True)
 
-
-# Now, submit_button is accessible globally
-    if submit_button:
-        # Convert input_data to a JSON-formatted string
-        input_data_json = json.dumps(input_data)
-
-    # Call ai6-6-22.py with the input data as an argument
-        result = subprocess.run(
-            ["python", "ai.py", input_data_json], capture_output=True, text=True)
-
-        if result.returncode == 0:
-            try:
-                # Check if the output is not empty
-                if result.stdout:
-                    # Replace single quotes with double quotes and then parse as JSON
-                    json_acceptable_string = result.stdout.replace("'", "\"")
-                    predictions = json.loads(json_acceptable_string)
-
-                # Display predictions
-
-                    _, r2_col1,  _ = st.columns(
-                        [1, 5, 1])
-                    with r2_col1:
-                        st.header("Prediction")
-                        # st.markdown(
-                        #     f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {predictions["content"]}</div>',
-                        #     unsafe_allow_html=True
-                        # )
-                        st.subheader(predictions+" SR")
-                else:
-                    st.error("The AI script returned empty output.")
-            except json.JSONDecodeError as e:
-                st.error(f"Error decoding JSON from the AI script: {str(e)}")
-            
-        else:
-            # Handle any errors that occurred during script execution
-            st.error("An error occurred while running the AI script.")
