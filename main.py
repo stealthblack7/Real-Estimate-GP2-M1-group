@@ -31,9 +31,9 @@ import openai
 import requests
 import time
 
-
-openai.api_key = os.getenv(
-    "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")
+#
+# openai.api_key = os.getenv(
+#     "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")
 
 st.set_page_config(page_title='Property Insight',
                    initial_sidebar_state='collapsed')
@@ -221,7 +221,7 @@ if page == "Home":
             st.write(f"\nMatch {i}:")
 
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Read website information from a file
 with open("info.txt", "r") as info_file:
@@ -567,26 +567,20 @@ neighbor_input_map = {
     'Tuwaiq': '10',
     'Laban': '11',
 }
+def user_inputs ():
+    with st.form("user_inputs"):
+        class1_input = st.selectbox(
+            "Select Class:", ["Commercial", "Residential"])
+        type1_input = st.selectbox(
+            "Select Type:", ["Apartment", "House", "Plot of Land", "Villa"])
+        area_input = st.number_input(
+            "What is the area:", min_value=0, value=500)
+        neighbor1_input = st.selectbox("Select Neighbor", [
+            "Albayan", "Alrimal", "Alkhayr", "Alearid", "Alqadisia", "Almilqa", "Almahdih", "Alyasamin", "Benban", "Tuwaiq", "Laban"])
+        date_input = st.date_input('Select a date')
 
-if page == "Calculator":
-    st.title("Calculator")
-    _, r2_col1, _ = st.columns([1, 5, 1])
-
-    with r2_col1:
-        with st.form("user_inputs"):
-            class1_input = st.selectbox(
-                "Select Class:", ["Commercial", "Residential"])
-            type1_input = st.selectbox(
-                "Select Type:", ["Apartment", "House", "Plot of Land", "Villa"])
-            area_input = st.number_input(
-                "What is the area:", min_value=0, value=500)
-            neighbor1_input = st.selectbox("Select Neighbor", [
-                                           "Albayan", "Alrimal", "Alkhayr", "Alearid", "Alqadisia", "Almilqa", "Almahdih", "Alyasamin", "Benban", "Tuwaiq", "Laban"])
-            date_input = st.date_input('Select a date')
-
-            # Add the submit button
-            submit_button = st.form_submit_button("Submit")
-
+        # Add the submit button
+        submit_button = st.form_submit_button("Submit")
     class_input = class_input_map[class1_input]
     type_input = type_input_map[type1_input]
     neighbor_input = neighbor_input_map[neighbor1_input]
@@ -605,6 +599,15 @@ if page == "Calculator":
         'mm': int(month_input),
         'yyyy': int(year_input),
     }
+    return submit_button , input_data
+
+if page == "Calculator":
+    st.title("Calculator")
+    _, r2_col1, _ = st.columns([1, 5, 1])
+
+    with r2_col1:
+        submit_button, input_data = user_inputs()
+        
 
 
 # Now, submit_button is accessible globally
@@ -630,6 +633,10 @@ if page == "Calculator":
                         [1, 5, 1])
                     with r2_col1:
                         st.header("Prediction")
+                        # st.markdown(
+                        #     f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {predictions["content"]}</div>',
+                        #     unsafe_allow_html=True
+                        # )
                         st.subheader(predictions+" SR")
                 else:
                     st.error("The AI script returned empty output.")
