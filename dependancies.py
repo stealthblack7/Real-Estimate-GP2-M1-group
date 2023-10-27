@@ -29,17 +29,6 @@ def insert_user(email, username, password):
     return db.put({'key': email, 'username': username, 'password': password, 'date_joined': date_joined})
 
 
-def insert_deal(deal, email, username, password):
-    """
-    Inserts Users into the DB
-    :param deal[]:
-
-    :return User Upon successful Creation:
-    """
-    date_joined = str(datetime.datetime.now())
-
-    return db.put({'key': email, 'username': username, 'password': password,'deal':deal ,  'date_joined': date_joined})
-
 def fetch_users():
     """
     Fetch Users
