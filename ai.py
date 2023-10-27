@@ -7,12 +7,12 @@ import streamlit as st
 
 
 # Define the directory where the trained models are saved
-model_dir = "trained_models_ai6-2/"
+model_dir = "ai6-2-last/"
 
 
 features_columns = ['التصنيف2', 'النوع2', 'area', 'الحي2', 'dd', 'mm', 'yyyy']
 # Load the trained models
-model_names = ["VotingRegressor"]
+model_names = ["VotingRegressor2 copy"]
 loaded_models = {model_name: joblib.load(
     f"{model_dir}{model_name}.pkl") for model_name in model_names}
 
