@@ -30,11 +30,12 @@ from PIL import Image
 import openai
 import requests
 import datetime
+import random
 import time
+from datetime import datetime
 
-#
-# openai.api_key = os.getenv(
-#     "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")
+
+
 
 st.set_page_config(page_title='Property Insight',
                    initial_sidebar_state='collapsed')
@@ -44,7 +45,7 @@ st.set_page_config(page_title='Property Insight',
 #                        icons=['house', 'chat-left-dots', 'geo-alt', 'archive', 'bar-chart-line', 'calculator', 'person'], menu_icon="cast", default_index=1)
 
 page = option_menu(None, ["Home", "ChatBot", "Property Map",
-                               "Deals", "Charts", "Calculator", "Account"],
+                          "Deals", "Charts", "Prediction", "Account"],
                         icons=['house', 'chat-left-dots', 'geo-alt',
                                'archive', 'bar-chart-line', 'calculator', 'person'],
                         menu_icon="cast", default_index=0, orientation="horizontal")
@@ -64,10 +65,10 @@ class_input_map = {
 }
 
 type_input_map = {
-    'Apartment': 1,
-    'House': 2,
-    'Plot of Land': 3,
-    'Villa': 4,
+    'Apartment': '01',
+    'House': '02',
+    'Plot of Land': '03',
+    'Villa': '04',
 }
 
 neighbor_input_map = {
@@ -124,6 +125,38 @@ def input_conv(class1_input, type1_input, area_input, neighbor1_input, date_inpu
     return input_data
 
 
+def predict(input_data, flag):
+    input_data_json = json.dumps(input_data)
+
+    # Call ai6-6-22.py with the input data as an argument
+    result = subprocess.run(
+        ["python", "ai.py", input_data_json], capture_output=True, text=True)
+
+    if result.returncode == 0:
+        try:
+            # Check if the output is not empty
+            if result.stdout:
+                 # Replace single quotes with double quotes and then parse as JSON
+                json_acceptable_string = result.stdout.replace("'", "\"")
+                predictions = json.loads(json_acceptable_string)
+
+                # Display predictions
+                if flag:
+                    _, r1_col1, r1_col2, _ = st.columns([2, 5, 5, 1])
+                    r1_col1.subheader("Prediction is :")
+                    r1_col2.subheader(predictions+" SR")
+                elif flag == False:
+                    _, r1_col1, r1_col2, _ = st.columns([1, 5, 5, 1])
+                    r1_col1.subheader("Prediction is :")
+                    r1_col2.subheader(predictions+" SR")
+                else:
+                        st.error("The AI script returned empty output.")
+        except json.JSONDecodeError as e:
+            st.error(f"Error decoding JSON from the AI script: {str(e)}")
+
+    else:
+        # Handle any errors that occurred during script execution
+        st.error(f"An error occurred while running the AI script: {result.stderr}")
 
 
 if page == 'Account':
@@ -211,7 +244,8 @@ def search_by_deal_nummper(deal_nummper):
     else:
         # Display the matching data in the desired format
         for i, (index, row) in enumerate(filtered_df.iterrows(), 1):
-            st.write(f"\nMatch {i}:")
+            _, r1_col1, r1_col2, _ = st.columns([.1, 5, 5, 1])
+            r1_col1.subheader(f"\nMatch {i}:")
             info = format_match(i, row)
             return info
 
@@ -228,9 +262,10 @@ def search_not_by_deal_nummper(real_estate_firts_text, real_estate_secando_text)
     else:
         # Display the matching data in the desired format with match numbers
         for i, (_, row) in enumerate(filtered_df.iterrows(), 1):
-            w = i
-            st.write("------------------------------")
-            st.write(f"\nMatch {w}:")
+
+            _, r1_col1, r1_col2, _ = st.columns([.1, 5, 5, 1])
+
+            r1_col1.subheader(f"\nMatch {i}:")
             info = format_match(i, row)
             return info
 
@@ -245,6 +280,10 @@ type_map = {
     '2': 'House',
     '3': 'Plot of Land',
     '4': 'Villa',
+    'شقة': 'Apartment',
+    'بيت': 'House',
+    'قطعة ارض': 'Plot of Land',
+    'فيلا': 'Villa',
 }
 
 neighborhood_map = {
@@ -266,30 +305,35 @@ def format_match(match_number, row):
 
     match_info = {
         "Deal Number": row["رقم الصفقة"],
-        "Class": class_map.get(row["التصنيف"], row["التصنيف"]),
+        "class": class_map.get(row["التصنيف"], row["التصنيف"]),
         "Type": type_map.get(row["النوع"], row["النوع"]),
         "Deal Price (SR)": row["سعر الصفقة (ريال)"],
-        "Area(Square meters)": row["المساحة (متر مربع)"],
+        "area": row["المساحة (متر مربع)"],
         "Price For one Square meters": row["سعر المتر المربع (ريال)"],
-        "Neighborhood": neighborhood_map.get(row["الحي"], row["الحي"]),
+        "neighbor": neighborhood_map.get(row["الحي"], row["الحي"]),
         "Date": row["تاريخ الصفقة"],
-        "Plan": row["المخطط"],
-        "Plot": row["القطعة"]
+        "plan": row["المخطط"],
+        "Land": row["القطعة"]
     }
-
-    match_df = pd.DataFrame(match_info.items(), columns=["Field", "Value"])
-    return match_df
+    return match_info
 
 
 if page == "Home":
     st.title("Welcome to the Home Page!")
+    st.markdown("""
+                ---        
+                """)
     st.write("This is where your main content will go.")
     if st.button("Send"):
         for i in range(1, 6):
             st.write(f"\nMatch {i}:")
 
 
-openai.api_key = "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"
+openai.api_key = "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"
+
+# Read website information from a file
+with open("info.txt", "r") as info_file:
+    website_info = info_file.read()
 
 # Read website information from a file
 with open("info.txt", "r") as info_file:
@@ -298,6 +342,9 @@ with open("info.txt", "r") as info_file:
 
 if page == "ChatBot":
     st.title("Chat with ChatGPT")
+    st.markdown("""
+                ---        
+                """)
 
     # Initialize an empty conversation history
     conversation_history = []
@@ -309,48 +356,66 @@ if page == "ChatBot":
     if st.button("Send"):
         # Append the user's message to the conversation history
         conversation_history.append({"role": "user", "content": user_message})
+        user_message_sptrip = user_message.strip()
+        # botchat about the website 
+        if user_message_sptrip.strip().lower() == "what do you do" or user_message_sptrip.strip().lower() == "talk about your web" or user_message_sptrip.strip().lower() == "what this web provide" :
+            x = random.randint(1, 5)
+            if x == 1:
+                conversation_history.append(
+                    {"role": "assistant", "content": "The Property Insight website offers users comprehensive information about real estate in Riyadh, KSA. You can explore properties on the map page, search for deals using our deal searcher, and utilize our AI and machine learning model on the predict page to estimate property prices. Additionally, we provide a market trends chart spanning the last 10 years. and I'm AI, I don't have feelings, but I'm here to help you with any questions or assistance you may need. How can I assist you today?"})
+            if x == 2:
+                conversation_history.append(
+                    {"role": "assistant", "content": "Property Insight is a platform dedicated to providing users with valuable information about properties in Riyadh, KSA. Users can navigate properties on the map page, search for deals with the deal searcher, and leverage our AI and machine learning model to predict property prices on the predict page. Furthermore, we offer a market trends chart covering the past decade. and I'm AI, I don't have feelings, but I'm here to help you with any questions or assistance you may need. How can I assist you today?"})
+            if x == 3:
+                conversation_history.append(
+                    {"role": "assistant", "content": "The Property Insight website is a valuable resource for individuals seeking property information in Riyadh, KSA. You can explore properties through the map page, search for deals with our deal searcher, and make use of our AI and machine learning model for property price predictions on the predict page. Additionally, we offer a market trends chart spanning the last 10 years. and I'm AI, I don't have feelings, but I'm here to help you with any questions or assistance you may need. How can I assist you today?"})
+            if x == 4:
+                conversation_history.append(
+                    {"role": "assistant", "content": "Property Insight is your go-to website for accessing property-related information in Riyadh, KSA. You have the option to browse properties on the map page, search for deals with the deal searcher, and employ our AI and machine learning model for property price predictions on the predict page. We also present a market trends chart covering the past decade. and I'm AI, I don't have feelings, but I'm here to help you with any questions or assistance you may need. How can I assist you today?"})
+            if x == 5:
+                conversation_history.append(
+                    {"role": "assistant", "content": "For those looking for property information in Riyadh, KSA, the Property Insight website is a valuable resource. You can explore properties on the map page, search for deals using the deal searcher, and utilize our AI and machine learning model for property price predictions on the predict page. In addition, we provide a market trends chart spanning the last 10 years. and I'm AI, I don't have feelings, but I'm here to help you with any questions or assistance you may need. How can I assist you today?"})
+        # about the chatbot
+        if user_message_sptrip.strip().lower() == "how are you" or user_message_sptrip.strip().lower() == "talk about your web" or user_message_sptrip.strip().lower() == "what this web provide":
+            x = random.randint(1, 5)
+            if x == 1:
+                conversation_history.append(
+                    {"role": "assistant", "content": "The Property Insight website offers users comprehensive information about real estate in Riyadh, KSA. You can explore properties on the map page, search for deals using our deal searcher, and utilize our AI and machine learning model on the predict page to estimate property prices. Additionally, we provide a market trends chart spanning the last 10 years."})
 
-        try:
-            # Generate a response from OpenAI
-            response = openai.ChatCompletion.create(
+        else:
+            try:
+                # Generate a response from OpenAI
+                response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=conversation_history
-            )
+                )
 
-            # Extract and display the chatbot's reply
-            chatbot_reply = response.choices[0].message["content"]
+                # Extract and display the chatbot's reply
+                chatbot_reply = response.choices[0].message["content"]
 
-            # Append the chatbot's reply to the conversation history
-            conversation_history.append(
-                {"role": "assistant", "content": chatbot_reply})
-
-            # Check if the user's question is about the website name
-            if "website name" in user_message.lower():
-                # If the user asks about the website name, explicitly provide the information
+                # Append the chatbot's reply to the conversation history
                 conversation_history.append(
-                    {"role": "assistant", "content": "The name of the website is Property Insight"})
+                {"role": "assistant", "content": chatbot_reply})
+                    
 
-        except openai.error.RateLimitError as e:
-            st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
-            time.sleep(60)  # Wait for a minute before retrying
+            except openai.error.RateLimitError as e:
+                st.text("ChatBot: Rate limit exceeded. Waiting and retrying...")
+                time.sleep(60)  # Wait for a minute before retrying
 
         # Display the entire chat history as a conversation
         for message in conversation_history:
             if message["role"] == "user":
                 # Display user message
                 st.markdown(
-                    f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    f'<div style="background-color: #2F4E75; color: white; padding: 10px; border-radius: 5px;"> You : {message["content"]}</div>',
                     unsafe_allow_html=True
-                )
+                    )
             else:
-                st.markdown(
-                    f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;">ChatBot: {message["content"]}</div>',
+                    st.markdown(
+                    f'<div style="background-color: #3D6698; color: white; padding: 10px; border-radius: 5px;"> ChatBot : {message["content"]}</div>',
                     unsafe_allow_html=True
-                )
+                    )
 
-
-
-    
 
 @st.cache_data
 def load_df():
@@ -396,50 +461,19 @@ def load_map():
     return m
 
 
-def predict(input_data , flag):
-    input_data_json = json.dumps(input_data)
 
-    # Call ai6-6-22.py with the input data as an argument
-    result = subprocess.run(
-        ["python", "ai.py", input_data_json], capture_output=True, text=True)
-
-    if result.returncode == 0:
-        #    try:
-                # Check if the output is not empty
-                if result.stdout:
-                    # Replace single quotes with double quotes and then parse as JSON
-                    json_acceptable_string = result.stdout.replace("'", "\"")
-                    predictions = json.loads(json_acceptable_string)
-
-                # Display predictions
-                    if flag :
-                        _, r2_col1,  _ = st.columns(
-                        [1, 5, 1])
-                        with r2_col1:
-                            st.header("Prediction")
-                            st.subheader(predictions+" SR")
-                    elif flag == False:
-                        _, r1_col1, r1_col2, _ = st.columns([1, 5, 5, 1])
-                        with r1_col1:
-                            st.header("Prediction")
-                            st.subheader(predictions+" SR")
-                    else:
-                        st.error("The AI script returned empty output.")
-            # except json.JSONDecodeError as e:
-            #     st.error(f"Error decoding JSON from the AI script: {str(e)}")
-
-    else:
-           # Handle any errors that occurred during script execution
-           st.error("An error occurred while running the AI script.")
 
 if page == "Property Map":
     # Load the DataFrame for the "map" page
     df = load_df()  # Load the dataset
-
+    _, r1_col1, _ = st.columns([1, 10, 1])
     m = load_map()
     if "selected_id" not in st.session_state:
         st.session_state.selected_id = None
     st.title('MAP')
+    st.markdown("""
+                ---        
+                """)
 
     _, r1_col1, _ = st.columns([1, 10, 1])
 
@@ -460,19 +494,21 @@ if page == "Property Map":
             # Display the entire selected row as a horizontal table
                     _, r1_col1,r1_col2, _ = st.columns([1, 5,5, 1])
                     _, r2_col1, _ = st.columns([1, 10, 1])
-                    r1_col1.header('Land')
-                    r1_col2.header('Plan')
-                    r1_col1.subheader(str(selected_row['Land']))
-                    r1_col2.subheader(str(selected_row['plan']))
-                    r1_col1.header('Class')
-                    r1_col2.header('Type')
-                    r1_col1.subheader(str(selected_row['class']))
-                    r1_col2.subheader(str(selected_row['Type']))
-                    r1_col1.header('Neighbor')
-                    r1_col2.header('Area')
-                    r1_col1.subheader(str(selected_row['neighbor']))
-                    r1_col2.subheader(str(selected_row['area']))
-                    current_date = datetime.date.today()
+                    r1_col2.subheader('Area')
+                    r1_col1.subheader('Neighbor')
+                    r1_col2.write(str(selected_row['area']))
+                    r1_col1.write(str(selected_row['neighbor']))
+                    r1_col1.subheader('Land')
+                    r1_col2.subheader('Plan')
+                    r1_col1.write(str(selected_row['Land']))
+                    r1_col2.write(str(selected_row['plan']))
+                    r1_col1.subheader('Class')
+                    r1_col2.subheader('Type')
+                    r1_col1.write(str(selected_row['class']))
+                    r1_col2.write(str(selected_row['Type']))
+                    
+                    # current_date = datetime.date.today()
+                    current_date = datetime.now()
 
                     # Format the current date as "YYYY/MM/DD"
                     formatted_date = current_date.strftime("%Y/%m/%d")
@@ -495,8 +531,11 @@ if page == "Deals":
         return df
 
     df = load_df()
-    st.title("deals")
-
+    
+    st.title("Deals")
+    st.markdown("""
+                ---        
+                """)
     with st.form("deal_nummper_user_inputs"):
         _, r1_col1, r1_col2, r1_col3, r1_col4, _ = st.columns(
             [1, 5, 2, 5, 5, 1])
@@ -519,10 +558,31 @@ if page == "Deals":
     with r3_col1:
         if real_estate_numper_search_button:
             if deal_nummper != '' and real_estate_firts_numper == '' and real_estate_secando_numper == '':
+                
                 st.title("Search Results ")
                 df = lode_data()
                 deal = search_by_deal_nummper(int(deal_nummper))
-                st.table(deal)
+                _, r1_col1, r1_col2, _ = st.columns([.1, 5, 5, 1])
+                r1_col2.subheader('Deal Number')
+                r1_col1.subheader('Date')
+                r1_col2.write(str(deal['Deal Number']))
+                r1_col1.write(str(deal['Date']))
+                r1_col2.subheader('Area')
+                r1_col1.subheader('Neighbor')
+                r1_col2.write(str(deal['area']))
+                r1_col1.write(str(deal['neighbor']))
+                r1_col1.subheader('Land')
+                r1_col2.subheader('Plan')
+                r1_col1.write(str(deal['Land']))
+                r1_col2.write(str(deal['plan']))
+                r1_col1.subheader('Class')
+                r1_col2.subheader('Type')
+                r1_col1.write(str(deal['class']))
+                r1_col2.write(str(deal['Type']))
+                r1_col1.subheader('Deal Price (SR)')
+                r1_col2.subheader('Price/meter^2')
+                r1_col1.write(str(deal['Deal Price (SR)']))
+                r1_col2.write(str(deal['Price For one Square meters']))
             
 
             elif real_estate_secando_numper != '' and deal_nummper == '':
@@ -544,13 +604,17 @@ if page == "Deals":
 
 
 if page == "Charts":
+    st.title("Charts")
+    st.markdown("""
+                ---        
+                """)
     _, r1_col1, r1_col2, r1_col3, r1_col4, r1_col5, _ = st.columns(
         [2, 3, 3, 3, 3, 3, 2])
     _, r2_col1, r2_col2, r2_col3, r2_col4, r2_col5, _ = st.columns(
         [2, 3, 3, 3, 3, 3, 2])
     _, r3_col1, _ = st.columns([6, 10, 1])
     _, r4_col1, _ = st.columns([1, 10, 1])
-
+    
     with r1_col1:
         if st.button("2013"):
             with r3_col1:
@@ -558,6 +622,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2013')
                 st.subheader('chart for 2013')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data_2013, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data_2013, x='Neighborhood',
@@ -569,6 +636,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2014')
                 st.subheader('chart for 2014')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -581,6 +651,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2015')
                 st.subheader('chart for 2015')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -593,6 +666,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2016')
                 st.subheader('chart for 2016')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -605,11 +681,14 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2017')
                 st.subheader('chart for 2017')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
-
+    
     with r2_col1:
         if st.button("2018"):
             with r3_col1:
@@ -617,6 +696,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2018')
                 st.subheader('chart for 2018')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -629,6 +711,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2019')
                 st.subheader('chart for 2019')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -640,6 +725,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2020')
                 st.subheader('chart for 2020')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -652,6 +740,9 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2021')
                 st.subheader('chart for 2021')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
@@ -664,20 +755,22 @@ if page == "Charts":
                     'data/2013.xlsx', sheet_name='2022')
                 st.subheader('chart for 2022')
                 with r4_col1:
+                    st.markdown("""
+                ---        
+                """)
                     st.bar_chart(data, x='Neighborhood',
                                  y='PropertySelld ', color='#3D6698', height=350, use_container_width=True)
                     st.bar_chart(data, x='Neighborhood',
                                  y='Propertys Price  ', color='#3D6698', height=350, use_container_width=True)
 
 
-
-
-
-
-if page == "Calculator":
-    st.title("Calculator")
+if page == "Prediction":
+    st.title("Prediction")
+    st.markdown("""
+                ---        
+                """)
     _, r2_col1, _ = st.columns([1, 5, 1])
-
+    
     with r2_col1:
         submit_button, class1_input, type1_input, area_input, neighbor1_input, date_input = user_inputs()
         input_data = input_conv(class1_input, type1_input,
